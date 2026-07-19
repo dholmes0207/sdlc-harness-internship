@@ -1,0 +1,36 @@
+- term: accent fold
+  definition: 'Chuan hoa chuoi tieng Viet ve ASCII thuong: NFD + bo ky tu Mn, ROI map d/D->d rieng. Buoc map d la bat buoc - NFD mot minh sot d o 8/20 san pham.'
+  forbidden:
+  - normalize
+  - slugify
+  backing:
+  - docs/decisions.md#DEC-1
+  actor: user:duyluuhx07@gmail.com
+  ts: '2026-07-19T08:07:44.309018+00:00'
+- term: token index
+  definition: dict[token -> set(product_id)] dung luc khoi dong tu name + brand + category_name da fold. Khop token NGUYEN VEN, AND tren moi token cua truy van.
+  forbidden:
+  - search index
+  - inverted index
+  backing:
+  - docs/decisions.md#DEC-1
+  actor: user:duyluuhx07@gmail.com
+  ts: '2026-07-19T08:07:48.657163+00:00'
+- term: pagination envelope
+  definition: Response boc ngoai gom total, page, page_size, items. total = so ban ghi khop sau loc TRUOC khi cat trang - KHAC key total=20 co san trong data/products.json.
+  forbidden:
+  - wrapper
+  - result set
+  backing:
+  - docs/system-architecture.md
+  actor: user:duyluuhx07@gmail.com
+  ts: '2026-07-19T08:07:53.111087+00:00'
+- term: effective price
+  definition: 'Gia dung de loc: effective_price, fallback original_price. Null ca hai -> san pham VAN hien khi list/search nhung BI LOAI khi co min_price/max_price. Dung 1 san pham: printer-318469.'
+  forbidden:
+  - final price
+  - real price
+  backing:
+  - docs/system-architecture.md
+  actor: user:duyluuhx07@gmail.com
+  ts: '2026-07-19T08:07:57.741651+00:00'

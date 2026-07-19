@@ -1,0 +1,77 @@
+# Machine-readable phase DAG for plan 260719-1435-product-search-api.
+# edges: {from: A, to: B} = "A runs BEFORE B" (A is B's prerequisite).
+#
+# The chain is fully LINEAR — there is no antichain. An earlier revision asserted
+# P2 and P3 were mutually independent; that was WRONG (red-team H4 / VL-14):
+# app/loader.py (P3) calls app.text.fold (P2) in build_category_map and
+# resolve_category, so P2 is a hard prerequisite of P3. The {from: P2, to: P3}
+# edge below encodes that. Derived batches: [[P1],[P2],[P3],[P4],[P5],[P6]].
+#
+# Parallelism is DERIVED from this graph, never authored — no --parallel
+# dependency matrix is emitted for this plan.
+
+edges:
+  - {from: P1, to: P2}
+  - {from: P2, to: P3}
+  - {from: P2, to: P4}
+  - {from: P3, to: P4}
+  - {from: P4, to: P5}
+  - {from: P5, to: P6}
+
+subtasks:
+  P1:
+    files_to_create:
+      - pyproject.toml
+      - app/__init__.py
+      - tests/__init__.py
+      - tests/unit/__init__.py
+      - tests/api/__init__.py
+      - tests/unit/test_smoke.py
+    files_to_modify:
+      - .gitignore
+    post: [verification-P1.json]
+
+  P2:
+    files_to_create:
+      - app/text.py
+      - tests/unit/test_text.py
+    files_to_modify: []
+    post: [verification-P2.json]
+
+  P3:
+    files_to_create:
+      - app/loader.py
+      - app/models.py
+      - tests/unit/test_loader.py
+      - tests/unit/test_models.py
+    files_to_modify: []
+    post: [verification-P3.json]
+
+  P4:
+    files_to_create:
+      - app/index.py
+      - app/search.py
+      - tests/unit/test_index.py
+      - tests/unit/test_search.py
+    files_to_modify: []
+    post: [verification-P4.json]
+
+  P5:
+    files_to_create:
+      - app/main.py
+      - tests/api/conftest.py
+      - tests/api/test_routes.py
+    files_to_modify: []
+    post: [verification-P5.json]
+
+  P6:
+    files_to_create:
+      - Dockerfile
+      - .dockerignore
+      - tests/api/test_docs.py
+    # README.md ALREADY EXISTS (105 B, committed) -> modify, not create.
+    # Listing it under files_to_create made phase 6 expect FileNotFoundError
+    # in its RED step, which would have gone red for the wrong reason.
+    files_to_modify:
+      - README.md
+    post: [verification-P6.json, review-decision.json]

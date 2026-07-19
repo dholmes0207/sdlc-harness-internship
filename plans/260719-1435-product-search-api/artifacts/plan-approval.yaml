@@ -1,0 +1,22 @@
+schema: plan-approval/v1
+plan: 260719-1435-product-search-api
+plan_hash: 913b0746149b
+file_hashes:
+  plan.md: df494f962757
+  phase-1-setup.md: af8278c87c90
+  phase-2-text-fold.md: bf89f1a80faf
+  phase-3-loader-models.md: 0bf438c5c7c2
+  phase-4-search-core.md: 6b08cf146564
+  phase-5-api-routes.md: f1b0be68b005
+  phase-6-docker-docs.md: 49f87c695bb4
+  plan-graph.yaml: 0a4f45c5326d
+author: user:duyluuhx07@gmail.com
+reviewer: user:duyluuhx07@gmail.com
+verdict: APPROVED
+rationale: 'Nguoi dung duyet truc tiep sau khi tu bat 6 mau thuan cu the (health len(index),
+  README create-vs-modify, docker foreground, P2 doc lap, wording khoa cung so silent-200,
+  lan lon D-x voi DEC-n) va xac nhan da sua xong. Plannotator khong cai nen gate tut
+  ve doc thu cong; plan.md da gui cho nguoi dung. Gate xanh: plan_graph exit 0, plan_layout_check
+  exit 0, glossary check exit 0.'
+ts: '2026-07-19T09:26:45.724762+00:00'
+run_seq: null
