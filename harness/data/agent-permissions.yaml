@@ -1,0 +1,16 @@
+# agent-permissions.yaml — RETIRED whitelist table (kept INERT).
+#
+# The per-agent_type write-lane WHITELIST this file used to hold has been replaced by
+# the two-tier DENY-LIST model. An agent now writes ANYWHERE except the code floor
+# (core-immune + the harness binary minus the tests carve); a soft-tier match is
+# observed, not blocked. There is no per-role lane table any more.
+#
+#   Floor + soft config:  harness/data/write-deny-policy.yaml (+ write_deny_policy.py)
+#   Matcher:              harness/scripts/deny_matcher.py
+#   Decision:             harness/scripts/agent_permissions.py (decide -> Verdict)
+#   Self-service check:   harness/scripts/check_permission.py --name <role>
+#   Soft-tier widen:      harness/scripts/deny_audit.py --request-widen <path>
+#
+# This file is retained only so existing GUARD_LIST / component references stay valid;
+# it declares no roles and is read by nothing. Do not re-add a `roles:` table.
+roles: {}

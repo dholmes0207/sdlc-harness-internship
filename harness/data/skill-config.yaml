@@ -1,0 +1,29 @@
+# skill-config.yaml — human-edited plan + per-skill knobs.
+#
+# Read by harness/scripts/skill_config.py. Two postures: load() fails OPEN (a bad value
+# degrades to the default + records `_diag`), load_strict() fails CLOSED (a gate raises).
+# `locale.thinkingLanguage` lives NOT here but in harness/data/output.yaml, co-located with
+# `language` (both are locale axes). One-shot view: `skill_config.py --resolved`.
+#
+# plan.validation — how hs:plan runs its validation interview:
+#   mode:         prompt | auto | strict | none   (default prompt)
+#   minQuestions: 0-20   (default 3)
+#   maxQuestions: 1-20   (default 8)
+#   focusAreas:   subset of [assumptions, risks, tradeoffs, architecture, security,
+#                 performance, testing, dependencies]  (default first four)
+# plan.resolution.branchPattern — regex whose first capture group is the plan slug.
+# skills.<name>.* — an open per-skill option bag (add sub-options as skills need them).
+
+plan:
+  validation:
+    mode: prompt
+    minQuestions: 3
+    maxQuestions: 8
+    focusAreas: [assumptions, risks, tradeoffs, architecture]
+  resolution:
+    branchPattern: '(?:feat|fix|chore|refactor|docs)/(?:[^/]+/)?(.+)'
+
+skills:
+  # Example per-skill bag. Remove or extend as skills grow their own options.
+  research:
+    useGemini: false

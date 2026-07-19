@@ -1,0 +1,48 @@
+# Durable per-skill thin-core body-cap overrides (chars).
+#
+# DISTINCT from thin-core-grandfather.yaml. That ledger holds TEMPORARY debt: an
+# over-cap file downgraded to advisory in the repo-wide sweep, re-teething under
+# `--strict` (CI on changed files), meant to SHRINK to empty. This file is the opposite
+# intent — a PERMANENT, accepted, still-bounded higher body cap for a skill whose
+# always-read body legitimately carries more load-bearing directive than the general
+# 15,000-char cap. The override HOLDS under `--strict`; it is not debt to pay down.
+#
+# It is NOT a "waive the cap" escape. The mechanism (check_skill_structure.py) keeps it
+# controlled so nothing balloons blindly:
+#   - EXEMPTION_HARD_CEILING bounds every override — a value above it is CLAMPED,
+#   - an override must sit ABOVE the general cap (below it is pointless),
+#   - every entry MUST carry a reason (raising a cap is a deliberate, visible act),
+#   - test_thin_core_caps.py fails if an exempted skill shrinks back under the general
+#     cap (its override is then dead weight and must be removed here).
+#
+# Shape: <skill-dir-name>: {body_max: <int chars>, reason: <str, >=40 chars>}
+
+cook:
+  body_max: 18000
+  reason: >-
+    Spine orchestrator. Its always-read body carries the harness's densest mandatory
+    directive set — every hard stage gate, the per-phase delegate-by-default STOP
+    checkpoint, the deterministic mode-resolution order, the post-build MANDATORY
+    delegation, and the Step-5 review-effort control (the --review dial + its no-skip
+    floor). Compressing it to the general cap would push a load-bearing checkpoint
+    into a load-on-demand reference the model may never open.
+
+plan:
+  body_max: 19000
+  reason: >-
+    Spine orchestrator. The requirements-pinning interview contract, the mode/flag
+    matrix, the constraint-scan + red-team + validate gate sequence, the handoff
+    flag-propagation, and the probe-first empirical-checks bookend (the ★ priority
+    discipline) are all always-read directive that must not be demoted to a
+    load-on-demand reference without weakening the plan-to-cook contract. Bumped
+    17500->19000 for the OUTER-HARNESS-E1 plan-methodology rules (S1/S2/S3/S4/S7):
+    their route-lines land inside this always-read body, and the prior cap left only
+    ~94 chars of headroom — not enough for even the first route line.
+
+fable-thinking:
+  body_max: 25000
+  reason: >-
+    Verbatim reasoning-protocol port whose body is one cohesive always-read unit — the
+    Floor, the Proportionality Gate, the Constraint Loop, the five Moves, Claim Discipline
+    and the Self-Review Gate cross-reference each other, so splitting them into references
+    would break the protocol rather than thin it. Granted the named clamp-exemption ceiling.

@@ -1,0 +1,17 @@
+# task-store.yaml — provider cho adapter task-store (người-chỉnh, tracked git).
+# Token KHÔNG BAO GIỜ nằm trong file này: token_env chỉ NÊU TÊN biến env
+# chứa personal access token của từng dev .
+provider: github
+
+github:
+  base_url: https://api.github.com
+  repo: hieubui2409/sdlc-harness     # owner/name chứa issues làm task
+  token_env: GITHUB_TOKEN            # tên biến env, không phải giá trị
+  api_version: "2022-11-28"          # pin date-based, sống tới 2028-03
+
+# gitlab: adapter có sẵn (task_store_gitlab.py: GitLabTaskStore) nhưng chưa bật
+# làm provider; cần {base_url, project_id, token_env} để kích hoạt.
+
+timeouts:
+  connect_s: 5
+  read_s: 15

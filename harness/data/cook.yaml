@@ -1,0 +1,13 @@
+# cook.yaml — cook execution knobs (human-edited config).
+#
+# parallel: opt-in multi-agent execution for independent phases. Default false =
+#   today's strictly-sequential cook (non-breaking). Override precedence, highest
+#   first: `--parallel` flag > HARNESS_COOK_PARALLEL env > this file > default.
+# parallel_max: cap on concurrent slices when parallel is on.
+#
+# Parallelism never weakens a gate and never trusts a subagent on sight — every
+# slice is verified before merge and the full suite runs at the integration barrier.
+# See harness/plugins/hs/skills/cook/references/parallel-execution.md.
+
+parallel: false
+parallel_max: 4

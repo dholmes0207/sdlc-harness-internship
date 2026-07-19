@@ -1,0 +1,8 @@
+# >>> harness (generated runtime — never commit) >>>
+.harness/
+harness/state/
+harness/standards/.snapshots/
+harness/e2e/RUN-LOG.md
+.claude/settings.json
+.claude/settings.local.json
+# <<< harness <<<

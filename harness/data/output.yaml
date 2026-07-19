@@ -1,0 +1,30 @@
+# output.yaml — language of harness-GENERATED prose (reports, docs, plan narration).
+#
+# Instruction files (skills, references, rules, CLAUDE.md) are English. This
+# setting only governs the language the harness WRITES OUT for humans, and
+# whether the humanizer rule (harness/data/output-styles/humanizer-and-anti-ai-tells.md) is
+# applied to that prose.
+#
+#   language: vi | en   (default vi — English instructions in, Vietnamese reports out)
+#   humanize: true|false (apply anti-AI-tell + natural-prose cleanup; default FALSE —
+#     token-spend, on only when publishing a report externally). Leave absent = off.
+#   audience: off (default) or 0..5 — prose register for CHAT + generated reports.
+#     0=plain (non-technical: so-what opener, inline term defs, glossary) … 5=peer
+#     (dense). Evidence (file:line/IDs/SHAs/numbers/quotes) invariant at every level.
+#     Injected into the session AND read by report skills/agents via `--resolved`.
+#   code_style: off (default) or 0..5 — adapts GENERATED CODE only (comment density,
+#     verbosity, examples) to the reader's coding expertise. 0=beginner (eli5) …
+#     5=expert (god). NOT scope-fenced — it shapes the deliverable; does NOT alter
+#     chat/report prose (that is `audience`). Profiles: harness/data/output-styles/.
+#     Off = leave the key absent. Set via `output_config.py --set code_style=N` or /hs:setup.
+#   thinking_language: en (default) — the language the model THINKS/reasons in (extended
+#     reasoning), separate from `language` (the prose written OUT). A free language code/name;
+#     default `en` (English). Co-located with `language` because both are locale axes.
+#
+# Terminal conversational voice lives in a SEPARATE file: harness/data/terminal-voice.yaml
+# (scope-fenced, fail-open, dev-overridable). This file = deliverable output
+# (gate-read fail-closed, tracked-only). The two are deliberately NOT merged.
+# One-command unified view of every knob: `output_config.py --resolved`.
+
+language: vi
+thinking_language: en
