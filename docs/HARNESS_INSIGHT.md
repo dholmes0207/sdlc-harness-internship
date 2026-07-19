@@ -1,204 +1,126 @@
-# Báo cáo insight bước đầu khi sử dụng SDLC Harness
+# Báo cáo insight khi sử dụng SDLC Harness
 
-> Trạng thái: Báo cáo tạm thời. Sau khi triển khai dùng SDLC Harness, do chưa quen cách > thiết lập và sử dụng nên đốt token khá nhanh, quy trình hiện đã hoàn thành đến Phase 2
-> của bước cook. Em sẽ cập nhật kết quả đầy đủ sau khi hoàn thành các bước
-> implementation, test, review và ship.
-
-## 1. Bối cảnh thực hiện
+## 1. Bối cảnh
 
 Trong bài thực tập này, em sử dụng SDLC Harness v5.3.0 kết hợp với Claude
-Code để phát triển một demo Product Search API.
-Products hiện tại em tận dụng luôn của Dienmayxanh, một bài tập mà nhóm em đã thực hiện khi tham gia cuộc thi Vietnam AI Innovation, dữ liệu được crawl từ web trong quá trình làm đề thi.
+Code để xây dựng một Product Search API bằng FastAPI.
 
-Demo sử dụng:
+Dữ liệu gồm 20 sản phẩm điện máy được chọn từ bộ dữ liệu Điện Máy Xanh mà
+nhóm em từng xử lý trong cuộc thi Vietnam AI Innovation.
 
-- Python và FastAPI.
-- File `data/products.json` gồm 20 sản phẩm điện máy.
-- Tìm kiếm sản phẩm bằng tiếng Việt có dấu hoặc không dấu.
+Sản phẩm hỗ trợ:
+
+- Tìm kiếm tiếng Việt có dấu hoặc không dấu.
 - Lọc theo ngành hàng, thương hiệu và khoảng giá.
+- Phân trang kết quả.
+- Swagger UI và Docker.
 - Unit test và API integration test.
-- Dockerfile và tài liệu hướng dẫn chạy.
 
-Mục tiêu chính của em không chỉ là hoàn thành API, mà còn là trải nghiệm
-đầy đủ quy trình của Harness từ discover, plan, cook, test, review đến ship.
+## 2. Quy trình thực hiện
 
-## 2. Cảm nhận ban đầu
+Em đã đi qua các bước:
 
-Quan điểm ban đầu của em là Harness tạo ra một quy trình kiểm soát AI rất
-chặt chẽ. AI không được viết code ngay sau khi nhận yêu cầu, mà phải khảo
-sát repository, kiểm tra dữ liệu, xác định phạm vi, lập kế hoạch, đánh giá
-rủi ro và chờ con người phê duyệt.
+1. Cài đặt và xác minh Harness.
+2. Discover yêu cầu và kiểm tra dữ liệu thực tế.
+3. Lập plan, red-team và human review.
+4. Phê duyệt plan.
+5. Cook theo TDD qua 6 phase.
+6. Independent testing và code review.
+7. Kiểm tra Swagger bằng Uvicorn và Docker.
+8. Chạy ship preflight.
 
-Điều này khác khá nhiều với cách em thường sử dụng AI trước đây. Thông
-thường, em mô tả yêu cầu rồi để AI trực tiếp viết hoặc sửa code. Với
-Harness, mỗi quyết định quan trọng đều cần có bằng chứng, tiêu chí kiểm tra
-và artifact để truy vết.
+Kết quả cuối:
 
-## 3. Những điểm em đánh giá cao
+- Hoàn thành 6/6 phase.
+- 135 test pass.
+- Independent tester: PASS.
+- Code review: PASS.
+- Acceptance criteria A1–A19 có bằng chứng.
+- Swagger chạy đúng bằng Uvicorn và Docker.
+- Truy vấn `may in` trả đúng 4 sản phẩm.
 
-### 3.1. Harness không hoàn toàn tin vào mô tả ban đầu
+## 3. Những insight quan trọng
 
-Trong bước discovery, Harness đã trực tiếp đọc và kiểm tra
-`data/products.json` thay vì chỉ dựa trên mô tả của em.
+### Harness buộc AI kiểm tra giả định trước khi code
 
-Quá trình này phát hiện được các vấn đề thực tế như:
+Trong bước discovery, Harness phát hiện nhiều vấn đề mà em có thể bỏ qua
+nếu triển khai trực tiếp:
 
-- File JSON là một object chứa trường `products`, không phải một list trực
-  tiếp.
-- Unicode NFD không tự chuyển ký tự `đ` thành `d`.
-- Tìm kiếm bằng substring khiến cụm “máy in” khớp nhầm với từ “Inverter”.
-- Dữ liệu không đủ để lọc theo trạng thái còn hàng hoặc hiển thị hình ảnh.
+- Unicode NFD không tự chuyển `đ` thành `d`.
+- Tìm kiếm substring khiến “máy in” khớp nhầm với “Inverter”.
+- `/products/search` có thể bị route `/{product_id}` bắt nhầm.
+- HTTP 200 không đảm bảo response body đúng.
+- Dữ liệu JSON có cấu trúc khác với giả định ban đầu.
 
-Theo em, đây là một điểm tốt vì nó giảm khả năng AI xây dựng giải pháp trên
-những giả định sai.
+Điều này giúp giảm nguy cơ AI xây dựng giải pháp dựa trên thông tin sai.
 
-### 3.2. Harness chú trọng các lỗi trả về kết quả có vẻ đúng
+### Test xanh chưa chắc đã là test tốt
 
-Một insight quan trọng em nhận được là HTTP status thành công không đồng
-nghĩa API hoạt động đúng.
+Trong Phase 1, một test bảo vệ cấu hình `pythonpath` luôn pass kể cả khi cấu
+hình bị xóa. Harness yêu cầu viết lại test và chứng minh:
 
-Harness đã phân tích một số trường hợp API vẫn có thể trả HTTP 200 nhưng
-nội dung sai, ví dụ:
+1. Có cấu hình thì test pass.
+2. Xóa cấu hình thì test fail.
+3. Khôi phục cấu hình thì test pass trở lại.
 
-- `/products/search` bị route `/{product_id}` bắt nhầm.
-- Lifespan không chạy khiến API trả danh sách rỗng.
-- Query chỉ gồm khoảng trắng vượt qua validation.
-- Filter category rỗng bị hiểu như không có filter.
-- Response model được khai báo nhưng không gắn vào endpoint.
+Theo em, đây là insight kỹ thuật quan trọng nhất:
 
-Do đó, các bài test không chỉ kiểm tra status code mà còn phải kiểm tra
-nội dung response.
+> Test không chỉ cần pass trên code đúng mà còn phải fail khi hành vi cần
+> bảo vệ bị phá vỡ.
 
-### 3.3. Quyết định được ghi lại và có thể truy vết
+### Nhiều lớp review vẫn tạo thêm giá trị
 
-Harness tạo ra nhiều artifact như:
+Sau khi 131 test đã pass, independent tester vẫn phát hiện hai test chỉ
+kiểm tra HTTP status mà chưa kiểm tra nội dung response.
 
-- Discovery brief.
-- Architecture decision.
-- System architecture.
-- Code standards.
-- Plan và các phase.
-- Plan approval.
-- Verification artifact.
-- Commit theo từng phase.
+Code reviewer tiếp tục phát hiện:
 
-Theo em, cách này hữu ích trong môi trường nhóm vì người review có thể biết
-AI đã chọn giải pháp nào, tại sao chọn và đã kiểm tra bằng cách nào.
+- Nguy cơ rò field ngoài response contract.
+- Loader có thể nuốt exception.
+- Token index có thể lập chỉ mục sai field.
+- `lookup()` trả về mutable set dùng chung, khiến caller có thể vô tình làm
+  hỏng index.
 
-### 3.4. Harness vẫn yêu cầu con người kiểm soát
-
-Mặc dù có những lợi điểm trên, nhưng trong vòng review plan, em đã phát hiện hai lỗi mà cả planner và red-team hiện tại đều bỏ sót:
-
-- `README.md` đã tồn tại nhưng plan lại coi là file cần tạo mới.
-- Lệnh `docker run` chạy foreground sẽ làm quy trình bị treo trước khi chạy
-  được các lệnh `curl`.
-
-Sau khi em phản hồi, Harness sửa lại plan, chạy lại validation rồi mới cho
-phép phê duyệt.
-
-Điều này cho em thấy Harness hỗ trợ review rất tốt, nhưng không thay thế
-hoàn toàn trách nhiệm của người phát triển.
+Sau khi sửa các vấn đề này, tổng số test tăng lên 135.
 
 ## 4. Khó khăn và hạn chế
 
-### 4.1. Quy trình khá nặng đối với một demo nhỏ
+Quy trình tương đối nặng đối với một demo chỉ có 20 sản phẩm và 4 endpoint.
+Plan dài hơn 2.300 dòng, sử dụng nhiều agent và tiêu tốn khá nhiều token.
 
-Demo chỉ sử dụng một file JSON gồm 20 sản phẩm, nhưng plan cuối cùng có hơn
-2.300 dòng và được chia thành 6 phase.
+Phiên Claude Code từng chạm giới hạn khi bắt đầu Phase 3. Tuy nhiên, nhờ
+Harness commit và lưu verification artifact theo từng phase, em có thể tiếp
+tục mà không mất kết quả đã hoàn thành.
 
-Thời gian dành cho discover, probe, plan, red-team và sửa plan lớn hơn
-nhiều so với thời gian em dự kiến cần để tự viết API.
+Em cũng gặp vấn đề khi push GitHub vì một số file `.pyc` của Harness chứa
+chuỗi secret mẫu. Em phải tạo một repository public đã làm sạch lịch sử.
+Do repository gốc và repository public có lịch sử Git khác nhau, phần
+transport tự động của ship không thể thực hiện an toàn.
 
-Theo quan điểm của em, Harness phù hợp hơn với:
+Ship preflight vẫn xác nhận test, verification, review, approval và secret
+scan đều pass. Việc công bố sản phẩm được thực hiện thủ công qua GitHub.
 
-- Feature có rủi ro cao.
-- Dự án có nhiều thành viên.
-- Dự án cần audit và truy vết quyết định.
-- Hệ thống mà lỗi AI có thể gây hậu quả lớn.
+## 5. Quan điểm cá nhân
 
-Đối với một demo nhỏ, governance overhead tương đối lớn so với lượng code
-cần triển khai.
+Theo em, SDLC Harness không làm cho AI luôn đúng. Giá trị chính của công cụ
+là khiến lỗi của AI dễ phát hiện, có bằng chứng và có thể truy vết.
 
-### 4.2. Plan đã qua red-team vẫn có thể chứa guard không hiệu quả
+Harness phù hợp với các dự án:
 
-Trong Phase 1, một test được thiết kế để bảo vệ cấu hình `pythonpath`.
-Tuy nhiên, test ban đầu luôn pass vì `python -m pytest` tự thêm thư mục hiện
-tại vào `sys.path`.
+- Có nhiều edge case hoặc rủi ro cao.
+- Có nhiều người hoặc nhiều agent tham gia.
+- Cần audit và lưu lại quyết định kỹ thuật.
+- Cần kiểm soát việc AI sửa, commit hoặc push code.
 
-Điều này tạo ra một “guard giả”: test có vẻ hợp lệ nhưng không thực sự phát
-hiện được khi cấu hình bị xóa.
+Đối với task nhỏ, chi phí thời gian và token có thể lớn hơn lợi ích.
 
-Cook đã dừng lại, yêu cầu quyết định của người dùng và viết lại test. Test
-mới được kiểm tra ở ba trạng thái:
+Sau trải nghiệm này, em nhận thấy mô hình phù hợp nhất không phải là để AI
+tự động làm toàn bộ, mà là:
 
-1. Có cấu hình: test pass.
-2. Xóa cấu hình: test fail.
-3. Khôi phục cấu hình: test pass.
+> AI thực hiện và tự kiểm tra nhiều lớp; con người đánh giá bằng chứng,
+> quyết định trade-off và phê duyệt kết quả cuối cùng.
 
-Theo em, đây là insight kỹ thuật quan trọng nhất ở thời điểm hiện tại:
-test không chỉ cần chạy xanh, mà còn phải chứng minh được rằng nó sẽ đỏ khi
-hành vi cần bảo vệ bị phá vỡ.
+## 6. Liên kết bài nộp
 
-### 4.3. Tốn thời gian và giới hạn sử dụng model
-
-Việc sử dụng nhiều agent, chạy probe, red-team và xác minh độc lập tiêu tốn
-khá nhiều token và thời gian.
-
-Phiên Claude Code của em đã chạm giới hạn sử dụng khi bắt đầu Phase 3. Tuy
-nhiên, nhờ việc Harness commit và ghi verification artifact theo từng
-phase, kết quả của Phase 1 và Phase 2 không bị mất.
-
-## 5. Tiến độ hiện tại
-
-Tại thời điểm viết báo cáo này:
-
-- Cài đặt và kiểm tra Harness: hoàn thành.
-- Discovery: hoàn thành.
-- Plan: hoàn thành.
-- Red-team plan: hoàn thành.
-- Human review và plan approval: hoàn thành.
-- Phase 1 — Project setup: hoàn thành và đã commit.
-- Phase 2 — Vietnamese accent folding: hoàn thành và đã commit.
-- Phase 3 — Loader và models: chưa hoàn thành do phiên Claude Code chạm
-  giới hạn sử dụng.
-- Phase 4–6: chưa thực hiện.
-- Test tổng thể, code review và ship: chưa thực hiện.
-
-## 6. Quan điểm cá nhân bước đầu
-
-Theo quan điểm của em, SDLC Harness không làm cho AI luôn đúng. Giá trị
-chính của công cụ là khiến sai sót của AI dễ quan sát, dễ truy vết và khó
-bị bỏ qua hơn.
-
-Harness buộc AI phải:
-
-- Làm rõ yêu cầu trước khi code.
-- Đưa ra bằng chứng thay vì chỉ khẳng định.
-- Chia công việc thành các phase có tiêu chí hoàn thành.
-- Ghi lại quyết định và deviation.
-- Chờ con người duyệt ở các điểm quan trọng.
-- Kiểm tra lại kết quả do agent khác tạo ra.
-
-Tuy nhiên, chất lượng cuối cùng vẫn phụ thuộc vào khả năng review của con
-người. Trong quá trình thực hiện, em đã phát hiện lỗi mà planner và
-red-team bỏ sót, đồng thời developer cũng có lúc phản biện lại nhận định
-của main agent và chứng minh được nhận định đó chưa chính xác.
-
-Qua đó, em nhận thấy mô hình phù hợp nhất không phải là “AI tự động làm
-toàn bộ”, mà là:
-
-> AI thực hiện và tự kiểm tra nhiều lớp, còn con người chịu trách nhiệm
-> đánh giá phạm vi, quyết định các trade-off và phê duyệt kết quả.
-
-## 7. Nội dung sẽ cập nhật sau
-
-Sau khi hoàn thành toàn bộ quy trình, em sẽ bổ sung:
-
-- Kết quả của Phase 3–6.
-- Tổng số test và kết quả test cuối cùng.
-- Kết quả chạy API local và bằng Docker.
-- Kết quả code review.
-- Kết quả bước ship.
-- Link repository hoàn chỉnh.
-- So sánh cuối cùng giữa cách dùng AI thông thường và SDLC Harness.
-- Kết luận về trường hợp nên và không nên áp dụng Harness.
+- Repository: `https://github.com/dholmes0207/sdlc-harness-internship`
+- GitHub Release: `https://github.com/dholmes0207/sdlc-harness-internship/releases`
