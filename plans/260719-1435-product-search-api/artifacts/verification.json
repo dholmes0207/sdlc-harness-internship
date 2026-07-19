@@ -1,49 +1,83 @@
 {
   "stage": "push",
   "plan": "260719-1435-product-search-api",
-  "phase": "P2",
+  "phase": "P6",
   "actor": "user:ev1lstar2512@gmail.com/agent:claude",
-  "ts": "2026-07-19T16:55:00+00:00",
+  "ts": "2026-07-19T21:10:00+00:00",
   "checks": [
     {
       "name": "unit",
       "status": "PASS",
-      "detail": "`.venv/bin/python -m pytest tests/ -q` -> 23 passed, 0 failed, 0 skipped (19 from test_text.py + 4 from phase 1). Re-run independently by main."
+      "detail": "`.venv/bin/python -m pytest tests/ -q` -> 135 passed, 0 failed, 0 skipped. Final count after the post-review fixes (F1/F3/F6/F8 added 4 guards to the 131 baseline). Re-run independently by main."
     },
     {
       "name": "red_green_discipline",
       "status": "PASS",
-      "detail": "RED confirmed: `ModuleNotFoundError: No module named 'app.text'` before app/text.py existed. GREEN after implementation."
+      "detail": "RED for the CORRECT reason: `AssertionError: parse duoc 0 cap, phai la 5` -- NOT FileNotFoundError. README.md already existed so read_text() succeeds; the test went red because the curl table was absent (VL-26)."
     },
     {
-      "name": "regression",
+      "name": "readme_guard_not_empty_passing",
       "status": "PASS",
-      "detail": "R1 (mandatory regression test #1, docs/code-standards.md:53-55) present at unit tier: test_fold_maps_d_stroke_to_d, test_fold_d_stroke_uppercase, test_naive_nfd_would_fail_this, test_no_d_stroke_survives_fold_across_dataset."
+      "detail": "test_readme_curl_examples_match_reality asserts len(pairs) == 5 BEFORE the loop, so a regex parsing 0 pairs fails loudly instead of passing empty. README carries exactly 5 rows with a parseable `total:` out of 9 curl rows (VL-21)."
     },
     {
-      "name": "discrimination_proof_rk1",
+      "name": "docker_build_and_run",
       "status": "PASS",
-      "detail": "Tests proven to DISCRIMINATE, not just pass. Subagent swapped fold's body for naive NFD -> 4 tests failed including both critical ones; dataset leftover asserted 8 != 0. Implementation restored byte-identical (md5 c03d43305ac989ff801d5ca2988ea3ef, diff IDENTICAL). Main then re-derived the counts INDEPENDENTLY via a scratch script that reimplements naive NFD from scratch rather than importing app.text: naive 8/20, d-aware 0/20 -- matches the plan's OBSERVED figures exactly."
+      "detail": "docker build exit 0. Container run DETACHED, /health ready after 2 poll attempts (~1s, bar was <=15s). All 9 curl examples run against the LIVE container and matched. Extra: ?category= -> total 0 in-container, confirming decision #15 end to end."
     },
     {
-      "name": "a1_corroboration",
+      "name": "docker_cleanup",
       "status": "PASS",
-      "detail": "The 8 naive-NFD-broken product ids include refrigerator-358160, refrigerator-363108, refrigerator-363109 -- precisely the 3 products acceptance criterion A1 requires 'ngan da' to return. Naive NFD folds 'Ngan da' to 'ngan đa', so the query returns 0 with no error raised. Confirms RK1's silent-failure characterization on real data."
+      "detail": "docker stop ran; docker ps --filter name=product-search-api-demo -> empty. Port 8000 released (VL-28)."
     },
     {
-      "name": "a11_pure_layer_no_http",
+      "name": "rk15_image_does_not_install_project",
       "status": "PASS",
-      "detail": "grep -rnE 'fastapi|starlette' app/text.py -> 0 lines. Pure layer does not know HTTP (docs/code-standards.md:14-15)."
+      "detail": "In-container: `import pytest` -> ModuleNotFoundError (no dev-deps leaked). `importlib.metadata.version('product-search-api')` -> PackageNotFoundError (project NOT installed as a package). Dockerfile installs only the 3 pinned runtime deps; app/ enters via COPY."
+    },
+    {
+      "name": "image_layout_matches_default_data_path",
+      "status": "PASS",
+      "detail": "WORKDIR /app + COPY app/ /app/app/ + COPY data/ /app/data/ makes __file__.parent.parent resolve to /app, matching DEFAULT_DATA_PATH. Verified in-container: ls /app/data/products.json exit 0, 28402 bytes."
+    },
+    {
+      "name": "readme_setup_correctness",
+      "status": "PASS",
+      "detail": "DEFECT FOUND BY MAIN AND FIXED. The first README draft instructed `.venv/bin/pip install -e .` -- precisely the RK15/D-B command the plan forbids. Main reproduced the failure: 'Multiple top-level packages discovered in a flat-layout: [app, data, plans, harness]', build rejected. Doubly broken: this repo's .venv was made by `uv venv`, which installs no pip. Setup now uses the exact phase-1 uv commands plus a stdlib-venv fallback with no `-e .`, both re-verified in throwaway scratch dirs."
+    },
+    {
+      "name": "scope_discipline",
+      "status": "PASS",
+      "detail": "Phase 6 itself touched no application code. Later post-review commits deliberately changed app/index.py (F3 fix) under explicit user approval."
+    },
+    {
+      "name": "readme_preservation",
+      "status": "PASS",
+      "detail": "User-authored submission content preserved; THAY_BANG_LINK_RELEASE placeholder present and untouched (the user's to fill). Progress list refreshed to phases 1-6 per user decision. F4 fixed: the deliverable link pointed at docs/harness-insights.md but the real file is docs/HARNESS_INSIGHT.md -- a 404 on case-sensitive GitHub, inside the submission's own deliverable list."
     },
     {
       "name": "glossary_compliance",
       "status": "PASS",
-      "detail": "grep -rnE 'def (normalize|slugify)' app/text.py -> 0 lines. Term 'accent fold' used; stdlib unicodedata.normalize call present and permitted (docs/glossary.yaml allows the stdlib API, forbids naming one's own function normalize/slugify)."
+      "detail": "grep -riE 'normalize|slugify|inverted index|search index|wrapper|result set|final price|real price' README.md -> 0 matches."
     },
     {
-      "name": "fold_single_implementation",
+      "name": "independent_test_validation",
       "status": "PASS",
-      "detail": "grep -rl 'unicodedata' app/ -> exactly 1 file (app/text.py). NOTE: this is a WEAK sanity check only, NOT acceptance criterion A10. plan.md rewrote A10 into a function-identity test (app.loader.fold is app.text.fold) because this grep is bypassable by a duplicate fold written with str.maketrans (measured: 0 hits). The real A10 guards are scheduled in P3/P4 and are NOT yet satisfied."
+      "detail": "Step 4 @tester: PASS. 135 passed / 0 skipped / 0 xfail. R1-R5 present at BOTH unit and API tiers with exact-value assertions. Isolation holds (unit alone, api alone, reversed order, cross-file selection). Dataset SHA unchanged. Caveat recorded by main: pytest-randomly is NOT installed, so true random-seed reordering was never exercised -- 'reversed order passes' is weaker evidence than 'random seeds pass'."
+    },
+    {
+      "name": "independent_code_review",
+      "status": "PASS",
+      "detail": "Step 5 @code-reviewer: PASS, artifact review-decision.yaml. Verdict re-derived via 33 mutations on a sandboxed copy, 26 killed. All 5 merge-blocking conditions (docs/code-standards.md:102-104) verified clean by mutation, not inspection. 5 findings approved by the user and fixed in commit 5c19bb0: F1 (search route had no response-model leak guard -- fully disconnecting it left 131/131 green), F3 (lookup() returned the LIVE posting set; a caller's .discard() shrank the shared index 3->2, latent process-wide corruption), F4 (broken README link), F6 (swallowing try/except around load_dataset left 131/131 green), F8 (adding slug+sku to the index blob left 131/131 green). Each fix carries a red-then-green discrimination proof."
+    },
+    {
+      "name": "manual",
+      "status": "PASS",
+      "format": "manual",
+      "evidence_tier": "claimed",
+      "cmd": "uvicorn app.main:app --host 127.0.0.1 --port 8000 ; open http://127.0.0.1:8000/docs in a browser ; repeat against the Docker container",
+      "charter_cosign": "user:ev1lstar2512@gmail.com",
+      "detail": "A15 PERFORMED BY THE HUMAN USER and reported to the session. Result on BOTH bare uvicorn AND the Docker container: Swagger UI rendered at http://127.0.0.1:8000/docs, all 4 endpoints listed, and 'Try it out' on GET /products/search?q=may in returned HTTP 200 with total=4. EVIDENCE TIER IS `claimed`, NOT `anchored`, deliberately: harness/scripts/manual_test.py --anchor self-executes a command and captures its own output, so it structurally CANNOT anchor a visual browser render -- which is exactly why the plan classified A15 as `manual` (harness/rules/testability-triad.md). No anchor_id is cited because none exists; fabricating one would be rejected by the DoD gate and would be dishonest. The attestation is the user's; main only recorded it. SUPPORTING machine-checkable substrate independently verified by main (this does NOT prove the visual render, only that its preconditions hold): /docs returns 200 and the served HTML contains swagger-ui markup; /openapi.json lists exactly the 4 expected paths; /products/search?q=may in returns total=4 -- all consistent with the user's report. PLAN DEFECT NOTED: the phase file and plan.md both name `manual_test_anchor.py` as A15's anchor, but that script DOES NOT EXIST -- the real one is harness/scripts/manual_test.py. An eighth instance of a plan criterion referencing something never checked."
     }
   ],
   "verdict": "PASS",
@@ -51,6 +85,7 @@
   "signals": [
     "src_changed",
     "test_has_assertions",
-    "discrimination_proven_against_broken_implementation"
+    "manual_criterion_satisfied_by_user_attestation",
+    "independent_test_and_review_both_pass"
   ]
 }

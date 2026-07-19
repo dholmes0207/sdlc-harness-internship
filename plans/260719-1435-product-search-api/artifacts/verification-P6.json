@@ -1,0 +1,77 @@
+{
+  "stage": "push",
+  "plan": "260719-1435-product-search-api",
+  "phase": "P6",
+  "actor": "user:ev1lstar2512@gmail.com/agent:claude",
+  "ts": "2026-07-19T18:55:00+00:00",
+  "checks": [
+    {
+      "name": "unit",
+      "status": "PASS",
+      "detail": "`.venv/bin/python -m pytest tests/ -q` -> 131 passed, 0 failed, 0 skipped (129 prior + 2 new in tests/api/test_docs.py). Re-run independently by main after the README fix."
+    },
+    {
+      "name": "red_green_discipline",
+      "status": "PASS",
+      "detail": "RED for the CORRECT reason: `AssertionError: parse duoc 0 cap, phai la 5` -- NOT FileNotFoundError. README.md already existed so read_text() succeeds; the test went red because the curl table was absent (VL-26)."
+    },
+    {
+      "name": "readme_guard_not_empty_passing",
+      "status": "PASS",
+      "detail": "test_readme_curl_examples_match_reality asserts len(pairs) == 5 BEFORE the loop, so a regex that parses 0 pairs fails loudly instead of passing empty. Verified: README carries exactly 5 rows with a parseable `total:` out of 9 curl rows. This is the only guard against fabricated numbers in the README (VL-21)."
+    },
+    {
+      "name": "docker_build_and_run",
+      "status": "PASS",
+      "detail": "docker build exit 0. Container run DETACHED (-d --rm --name), /health ready after 2 poll attempts (~1s, bar was <=15s). All 9 curl examples run against the LIVE container and matched: health products_loaded=20, page_size=10 -> total 20, q=ngan da -> 3, q=may in -> 4, category=tu lanh -> 4, min_price=0 -> 19, by-id 200, unknown-id 404 with detail, whitespace-q 422. Extra: ?category= -> total 0 in-container, confirming decision #15 end to end."
+    },
+    {
+      "name": "docker_cleanup",
+      "status": "PASS",
+      "detail": "docker stop ran; docker ps --filter name=product-search-api-demo -> empty. Port 8000 released, so later runs will not die with 'port is already allocated' (VL-28)."
+    },
+    {
+      "name": "rk15_image_does_not_install_project",
+      "status": "PASS",
+      "detail": "In-container: `import pytest` -> ModuleNotFoundError (no dev-deps leaked into the runtime image). `importlib.metadata.version('product-search-api')` -> PackageNotFoundError (project NOT installed as a package). Dockerfile installs only the 3 pinned runtime deps and brings app/ in via COPY."
+    },
+    {
+      "name": "image_layout_matches_default_data_path",
+      "status": "PASS",
+      "detail": "WORKDIR /app + COPY app/ /app/app/ + COPY data/ /app/data/ makes __file__.parent.parent resolve to /app, matching DEFAULT_DATA_PATH. Verified in-container: ls /app/data/products.json exit 0, 28402 bytes. A mismatched layout would fail-fast at container start even with the file present."
+    },
+    {
+      "name": "readme_setup_correctness",
+      "status": "PASS",
+      "detail": "DEFECT FOUND BY MAIN AND FIXED. The first README draft instructed `.venv/bin/pip install -e .` -- precisely the RK15/D-B command the plan forbids. Main reproduced the failure in a scratch dir replicating the flat layout: 'Multiple top-level packages discovered in a flat-layout: [app, data, plans, harness]', build rejected. Doubly broken: this repo's .venv was made by `uv venv`, which installs no pip, so .venv/bin/pip does not exist. Setup now uses the exact phase-1 uv commands plus a stdlib-venv fallback with no `-e .` and no `.`, and a Vietnamese note explaining why the project is never installed as a package. Subagent re-verified BOTH paths in throwaway scratch dirs: uv path installed 21 packages exit 0; stdlib path installed all 5 pins and imported them cleanly. The residual `-e .` occurrence in README is inside that explanatory note (documenting what NOT to do), which is intended."
+    },
+    {
+      "name": "scope_discipline",
+      "status": "PASS",
+      "detail": "git diff --name-only HEAD -- app/ -> empty. Phase 6 touched no application code, as required."
+    },
+    {
+      "name": "readme_preservation",
+      "status": "PASS",
+      "detail": "User-authored submission content preserved; THAY_BANG_LINK_RELEASE placeholder present and untouched (it is the user's to fill). Per the user's decision, the stale progress list ('Cook Phase 1' / 'Cook Phase 2') was refreshed to list phases 1-6, and the trailing sentence was reworded to keep the still-pending items (overall test results, code review, ship, final report) accurate. Recorded in the auto-decision ledger."
+    },
+    {
+      "name": "glossary_compliance",
+      "status": "PASS",
+      "detail": "grep -riE 'normalize|slugify|inverted index|search index|wrapper|result set|final price|real price' README.md -> 0 matches."
+    },
+    {
+      "name": "a15_manual_swagger_ui",
+      "status": "SKIP",
+      "detail": "NOT PERFORMED AND NOT CLAIMED. A15 requires a human to open http://127.0.0.1:8000/docs in a real browser (bare uvicorn AND the container) and confirm Swagger UI renders, lists 4 endpoints, and 'Try it out' returns 4 results for q=may in. TestClient proves /docs returns HTTP 200 but does NOT prove the UI loads assets and renders. Neither main nor the subagent can satisfy this; it is pending human verification. The plan classifies it as `manual` under harness/rules/testability-triad.md."
+    }
+  ],
+  "verdict": "PASS_WITH_RISK",
+  "change_class": "feature",
+  "signals": [
+    "src_changed",
+    "test_has_assertions",
+    "manual_criterion_outstanding_a15",
+    "critical_doc_defect_found_and_fixed"
+  ]
+}

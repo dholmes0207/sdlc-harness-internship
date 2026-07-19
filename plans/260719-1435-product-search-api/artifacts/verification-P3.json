@@ -1,0 +1,71 @@
+{
+  "stage": "push",
+  "plan": "260719-1435-product-search-api",
+  "phase": "P3",
+  "actor": "user:ev1lstar2512@gmail.com/agent:claude",
+  "ts": "2026-07-19T17:35:00+00:00",
+  "checks": [
+    {
+      "name": "unit",
+      "status": "PASS",
+      "detail": "`.venv/bin/python -m pytest tests/ -q` -> 53 passed, 0 failed, 0 skipped (23 prior + 30 new: 27 loader + 3 models). Re-run independently by main."
+    },
+    {
+      "name": "red_green_discipline",
+      "status": "PASS",
+      "detail": "RED confirmed: 27 loader tests failed with ModuleNotFoundError: No module named 'app.loader' before implementation. GREEN after."
+    },
+    {
+      "name": "a10_fold_identity_guard_real",
+      "status": "PASS",
+      "detail": "app.loader.fold is app.text.fold -> True (verified independently by main). DISCRIMINATION PROVEN: subagent replaced the import with a local str.maketrans fold copy -> identity test FAILED, while `grep -rnE unicodedata app/loader.py` reported CLEAN in the same broken state. That contrast is exactly why plan.md rewrote A10 away from the grep (VL-16). The real guard now exists and works."
+    },
+    {
+      "name": "a12_dataset_integrity",
+      "status": "PASS",
+      "detail": "sha256(data/products.json) = 52355b43b3cf3ed51526efd31c828869f0f3eaf8f8edf268d815253917749043, unchanged before and after the full loader suite (verified independently by main). DISCRIMINATION PROVEN ON A COPY, NOT THE REAL FILE (deliberate: the dataset is the project's only data source and a mid-run interruption could corrupt it): mutating a tmp copy via p.write_text() changed mtime, size and sha256 -> the three-way comparison detects it, while the OLD grep for open(...,'w') misses write_text entirely."
+    },
+    {
+      "name": "rk9_envelope_shape",
+      "status": "PASS",
+      "detail": "load_dataset() reads d['products'] (20) and d['categories'] (5) from the dict envelope. test_load_dataset_raises_on_toplevel_list locks the list-vs-dict trap directly."
+    },
+    {
+      "name": "rk8_total_key_collision",
+      "status": "PASS",
+      "detail": "hasattr(Dataset, 'total') -> False (verified by main). The dataset's own total=20 key cannot leak into the pagination envelope's total."
+    },
+    {
+      "name": "rk18_category_input_folding",
+      "status": "PASS",
+      "detail": "resolve_category 7/7 correct. Main independently confirmed 3 cases (Tu Lanh, TU LANH, May in) return None under a direct category_map.get(value) lookup and only pass because resolve_category folds the INPUT -- the exact 3/7 failure VL-18 predicted."
+    },
+    {
+      "name": "rk13_fail_fast",
+      "status": "PASS",
+      "detail": "6/6 corruption cases raise DatasetError, independently re-run by main: missing file, invalid JSON, top-level list, missing products key, empty products, duplicate ids. No silent return, no bare except."
+    },
+    {
+      "name": "vl23_dead_fallback_branch",
+      "status": "PASS",
+      "detail": "Main confirmed 0 real products are in the state (effective_price null AND original_price present), so the fallback branch is unreachable on real data. test_effective_price_falls_back_to_original correctly uses a synthetic dict and documents why."
+    },
+    {
+      "name": "models_contract",
+      "status": "PASS",
+      "detail": "PaginationEnvelope.model_fields == {total,page,page_size,items} exactly. ProductOut has 13 fields with zero leakage of availability/image_url/specifications/product_id_web/model_code. ProductOut.model_validate clean on 20/20 real products including printer-318469 with null prices."
+    },
+    {
+      "name": "a11_pure_layer_no_http",
+      "status": "PASS",
+      "detail": "grep -rnE 'fastapi|starlette' app/loader.py app/models.py -> 0 lines. CAVEAT recorded: the subagent had to reword a models.py docstring that mentioned those names in PROSE to clear this grep. A11's grep matches prose and would miss an importlib-based import -- it is a weaker criterion than it appears. Not blocking; logged for the final review."
+    }
+  ],
+  "verdict": "PASS",
+  "change_class": "feature",
+  "signals": [
+    "src_changed",
+    "test_has_assertions",
+    "discrimination_proven_against_broken_implementation"
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "stage": "push",
+  "plan": "260719-1435-product-search-api",
+  "phase": "P5",
+  "actor": "user:ev1lstar2512@gmail.com/agent:claude",
+  "ts": "2026-07-19T18:20:00+00:00",
+  "checks": [
+    {
+      "name": "unit",
+      "status": "PASS",
+      "detail": "`.venv/bin/python -m pytest tests/ -q` -> 129 passed, 0 failed, 0 skipped (94 prior + 35 new API tests). tests/api/ alone: 35 passed (bar was >=32). Re-run independently by main."
+    },
+    {
+      "name": "integration",
+      "status": "PASS",
+      "detail": "35 API tests through TestClient with lifespan active. Every test asserts on the response BODY, never status code alone -- the phase's standing law for silent-200 modes."
+    },
+    {
+      "name": "red_green_discipline",
+      "status": "PASS",
+      "detail": "RED confirmed: ModuleNotFoundError: No module named 'app.main' at conftest import. GREEN on the first implementation pass, no fix loop. Subagent also probed all 5 traps against the real FastAPI install BEFORE building (probe-first)."
+    },
+    {
+      "name": "rk2_route_order",
+      "status": "PASS",
+      "detail": "/products/search declared at app/main.py:123, /products/{product_id} at :146 -- 123 < 146, correct. Warning comments present above both. DISCRIMINATION PROVEN: swapping the order makes test_api_search_route_precedence_body_not_status fail. See the finding below about the symptom differing from the plan's documented one."
+    },
+    {
+      "name": "rk2_evidence_correction",
+      "status": "PASS",
+      "detail": "FINDING (plan evidence defect, not a code defect). The plan documents reversed routes yielding '200 {hit:by_id, product_id:search}' and builds R3's entire rationale on it ('a status-only assert PASSES while the API is broken'). Main reproduced BOTH cases side by side: a STUB by-id handler yields exactly that 200; the REAL handler (which raises 404 on unknown id) turns the SAME routing bug into 404 {'detail':'not found: search'}. So the plan measured a probe stub and recorded it as the system's behavior. The routing bug is identical in both; only the symptom differs. R3 is KEPT unchanged: it is mandatory (docs/code-standards.md:58-60), body assertion is strictly stronger and costs nothing, and the silent-200 returns the instant by-id stops 404ing. No code change made."
+    },
+    {
+      "name": "rk3_lifespan_canary",
+      "status": "PASS",
+      "detail": "conftest fixture uses `with TestClient(app) as c: yield c` (grep count 1). grep -c 'TestClient(app)' tests/api/test_routes.py -> 0, so no test bypasses the fixture. DISCRIMINATION PROVEN: bare TestClient makes the /health canary fail. Symptom differs from the plan's documented silent 200 {'total':0}: main verified it raises AttributeError ('State' object has no attribute 'dataset') because app.state has no fallback. That is fail-LOUD instead of fail-silent -- strictly better, and what docs/code-standards.md:78-79 actually asks for. With the context manager: 200 {'status':'ok','products_loaded':20}."
+    },
+    {
+      "name": "rk17_response_model_wired",
+      "status": "PASS",
+      "detail": "grep -c 'response_model=' app/main.py -> 4, one per route. Tests assert 'specifications' not in items[0] and set(items[0]) == the 13 ProductOut fields, on BOTH the list/search path and the separate by-id serialization path. Without this, ProductOut could be written perfectly and never connected, leaking 5 fields and inflating the payload 2.24x."
+    },
+    {
+      "name": "rk4_whitespace_q",
+      "status": "PASS",
+      "detail": "field_validator on q raises ValueError when not value.strip() -> native 422. Query(min_length=1) alone returns 200 for ?q=%20%20 (subagent re-probed this against the real install). ?q= and missing q also 422."
+    },
+    {
+      "name": "rk10_query_model_inheritance",
+      "status": "PASS",
+      "detail": "SearchParams(ListParams) with q INSIDE the model; handler takes a single Annotated[SearchParams, Query()] param. Subagent re-probed the trap: mixing a loose q with a separate query model returns 422 {'loc':['query','f']} for EVERY request including valid ones."
+    },
+    {
+      "name": "x4_health_arithmetic",
+      "status": "PASS",
+      "detail": "GET /health -> {'status':'ok','products_loaded':20}. Uses len(dataset.products)=20, NOT len(token_index)=90 (VL-13). Verified live by main."
+    },
+    {
+      "name": "boundary_validation",
+      "status": "PASS",
+      "detail": "6/6 422 cases: q empty, q whitespace-only, q missing, page=0, page_size=101, min_price>max_price. page_size=100 -> 200 (upper bound inclusive). ?bogus=x -> 200 (extra:forbid deliberately NOT set). ?q=--- -> 200 with total=0, not 422 (X5)."
+    },
+    {
+      "name": "a12_dataset_integrity_runtime",
+      "status": "PASS",
+      "detail": "sha256(data/products.json) = 52355b43b3cf3ed51526efd31c828869f0f3eaf8f8edf268d815253917749043, unchanged after the full API suite. Runtime never opens the dataset for writing."
+    },
+    {
+      "name": "a11_http_isolation",
+      "status": "PASS",
+      "detail": "grep -rlnE 'fastapi|starlette' app/ -> app/main.py ONLY. The pure layer (text, loader, models, index, search) remains HTTP-free as designed."
+    },
+    {
+      "name": "route_order_grep_criterion_defect",
+      "status": "PASS",
+      "detail": "FINDING (criterion defect, not a code defect). The phase's literal Success grep `@app.get(\"/products/search\")` returns NO MATCH (exit 1) against a spec-compliant main.py, because Requirements #9 of the SAME phase mandates response_model= on that same decorator line. The phase contradicts itself. Verified both forms directly. Used the decorator-PREFIX grep instead, which preserves VL-24's intent (immune to the mandatory warning comments, since a comment never contains the literal '@app.get(' substring) and correctly yields 123 < 146. Recorded in the auto-decision ledger."
+    }
+  ],
+  "verdict": "PASS",
+  "change_class": "feature",
+  "signals": [
+    "src_changed",
+    "test_has_assertions",
+    "discrimination_proven_against_broken_implementation",
+    "plan_evidence_defect_found_and_recorded"
+  ]
+}

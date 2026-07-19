@@ -1,6 +1,7 @@
 # System Architecture
 
-> Trạng thái: greenfield. Repo hiện chỉ có `data/products.json`, chưa có code.
+> Trạng thái: đã triển khai (OBSERVED). Code sống tại `app/` (`main.py`, `models.py`,
+> `loader.py`, `text.py`, `index.py`, `search.py`); dataset gốc ở `data/products.json`.
 > File này mô tả kiến trúc ĐÃ CHỐT cho Product Search API (xem `docs/decisions.md` DEC-1),
 > là đầu vào bắt buộc của `hs:plan` / `hs:cook`. Giữ ngắn và đúng.
 
@@ -17,15 +18,19 @@ không dấu** — đây là nơi mọi rủi ro kỹ thuật tập trung.
 
 | Component | Trách nhiệm | Ghi chú |
 |---|---|---|
-| `loader` | Đọc `data/products.json`, trả về danh sách sản phẩm đã validate | File là **envelope dict**, sản phẩm nằm ở key `products` (OBSERVED) |
+| `loader` | Đọc `data/products.json`, trả về danh sách sản phẩm đã validate; cũng chứa `resolve_category()` và `effective_price()` dùng bởi `search` (OBSERVED) | File là **envelope dict**, sản phẩm nằm ở key `products` (OBSERVED) |
 | `text` | Fold bỏ dấu + tách token | Nơi duy nhất biết về `đ`; xem Key decisions |
-| `index` | Dựng `dict[token → set(product_id)]` lúc khởi động | Chỉ index `name` + `brand` + `category_name` |
+| `index` | Dựng `dict[token → set(product_id)]` lúc khởi động + `lookup()` tra AND tại request-time | Chỉ index `name` + `brand` + `category_name` |
 | `search` | Khớp AND trên token, lọc category/brand/giá, sắp xếp, phân trang | Không biết gì về HTTP |
-| `models` | Pydantic response models (product, phong bì phân trang, lỗi) | |
+| `models` | Pydantic response models (product, phong bì phân trang, health check) | |
 | `main` | Khai báo FastAPI app + 4 route | **Thứ tự khai báo route là load-bearing** |
 
-Phụ thuộc một chiều: `main` → `search` → `index` → `text` → `loader`. Tầng `search` trở
-xuống thuần túy, test được không cần HTTP.
+Phụ thuộc một chiều, phân lớp (OBSERVED từ import thực tế): `text` là tầng đáy (không phụ
+thuộc gì trong `app/`); `loader` và `index` đều phụ thuộc `text`; `search` phụ thuộc
+`loader` + `index` + `text`; `main` phụ thuộc `search` + `index` + `loader` + `models` để
+wiring route. Không phải một chuỗi tuyến tính đơn — `search` và `main` đều phụ thuộc trực
+tiếp vào nhiều hơn một module tầng dưới. Tầng `search` trở xuống thuần túy, test được không
+cần HTTP.
 
 ## Data flow
 
@@ -43,10 +48,10 @@ invalidation, không ghi.
 
 | Dependency | Vai trò | Trạng thái |
 |---|---|---|
-| `fastapi` / `starlette 1.3.1` / `uvicorn` | web framework + server | **Chưa cài** (OBSERVED) |
-| `pydantic 2.13.2` | validation + serialization | Có sẵn |
-| `pytest 9.1.1` | test runner | Có sẵn |
-| `httpx2` | **bắt buộc** cho `starlette.testclient` | **Chưa cài** — `httpx` KHÔNG thay thế được |
+| `fastapi 0.139.2` / `starlette 1.3.1` / `uvicorn 0.51.0` | web framework + server | Đã cài (OBSERVED); `fastapi`+`uvicorn` chốt trong `pyproject.toml`, `starlette` là transitive dep của `fastapi` |
+| `pydantic 2.13.4` | validation + serialization | Đã cài |
+| `pytest 9.1.1` | test runner | Đã cài |
+| `httpx2 2.7.0` | **bắt buộc** cho `starlette.testclient` | Đã cài — `httpx` KHÔNG thay thế được |
 | `data/products.json` | nguồn dữ liệu duy nhất, bất biến | 28 KB, 20 sản phẩm |
 
 Không datastore, không API bên thứ ba, không queue.

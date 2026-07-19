@@ -1,0 +1,87 @@
+{
+  "stage": "push",
+  "plan": "260719-1435-product-search-api",
+  "phase": "P4",
+  "actor": "user:ev1lstar2512@gmail.com/agent:claude",
+  "ts": "2026-07-19T17:55:00+00:00",
+  "checks": [
+    {
+      "name": "unit",
+      "status": "PASS",
+      "detail": "`.venv/bin/python -m pytest tests/ -q` -> 94 passed, 0 failed, 0 skipped (53 prior + 41 new). Re-run independently by main."
+    },
+    {
+      "name": "red_green_discipline",
+      "status": "PASS",
+      "detail": "RED confirmed: 10 failed + 31 errors, all ModuleNotFoundError for app.index / app.search. GREEN after implementation."
+    },
+    {
+      "name": "independent_re_derivation",
+      "status": "PASS",
+      "detail": "Main re-derived ALL 33 phase-4 OBSERVED numbers from scratch via a standalone script, not by trusting the subagent or the test suite: 0 failures. Every acceptance number in the phase spec reproduced exactly."
+    },
+    {
+      "name": "r1_fold_search_tier",
+      "status": "PASS",
+      "detail": "q='ngan da' -> exactly 3 ids {refrigerator-358160, refrigerator-363108, refrigerator-363109}. Naive NFD would return 0."
+    },
+    {
+      "name": "r2_whole_token_match",
+      "status": "PASS",
+      "detail": "q='may in' -> exactly 4 ids {printer-318468, printer-318469, printer-357980, printer-357982}. Substring semantics would return 16 ('in' is inside 'Inverter'). lookup uses set intersection (AND); real-token + fake-token -> set()."
+    },
+    {
+      "name": "r4_null_price_rule",
+      "status": "PASS",
+      "detail": "No filter -> total=20 and printer-318469 present. min_price=0 -> total=19 and printer-318469 absent. max_price branch also excludes it (both branches locked, not just min). q='may in'+min_price=0 -> 3 (R2 x R4 intersection)."
+    },
+    {
+      "name": "r5_total_before_slicing",
+      "status": "PASS",
+      "detail": "page_size=10 -> total=20 AND len(items)=10. page=2 shares zero ids with page=1. page=3 -> (total=20, items=[]) with no raise (decision #13). category=refrigerator -> total=4 not 20, proving d['total'] did not leak (RK8)."
+    },
+    {
+      "name": "x1_is_not_none_trap_rk16",
+      "status": "PASS",
+      "detail": "THE fourth silent-200 mode, and the hardest to catch. category='' -> total=0 (NOT 20). DISCRIMINATION PROVEN: subagent flipped step 2 to `if category:` -> the test failed with `assert 20 == 0`, then restored byte-identical (md5 f666dbf3f3d7bcf0cfeef353af559175 both sides). Note category='bogus' gives 0 under BOTH implementations because 'bogus' is truthy -- it slips straight through the hole, which is exactly why the empty string is the only discriminating case. brand='' -> 0 likewise. Code gates on the RAW param then filters with a possibly-None resolved slug, so an unresolvable category yields 0 rather than skipping the filter."
+    },
+    {
+      "name": "x2_inclusive_price_bound_rk19",
+      "status": "PASS",
+      "detail": "min_price=3290000 -> total=19. DISCRIMINATION PROVEN: subagent flipped the bound to strict '>' -> test failed with `assert 17 == 19`, then restored byte-identical. The dataset's lowest effective price is exactly 3290000, which is why this is the only separating case; min_price=0 yields 19 under BOTH comparisons and locks nothing (VL-15)."
+    },
+    {
+      "name": "sort_contract",
+      "status": "PASS",
+      "detail": "First id air-conditioner-335837, last tablet-345544. Differs from file order (which starts refrigerator-358160), confirming the sort-by-id contract is independent of file serialization."
+    },
+    {
+      "name": "a10_fold_identity_search_tier",
+      "status": "PASS",
+      "detail": "app.search.fold is app.text.fold -> True (verified independently). Second site where fold could have been duplicated, since brand filtering needs it."
+    },
+    {
+      "name": "no_mutation",
+      "status": "PASS",
+      "detail": "dataset.products id list byte-identical after many run() combinations. Filtering uses new lists; sorting uses sorted() not .sort()."
+    },
+    {
+      "name": "a11_pure_layer_no_http",
+      "status": "PASS",
+      "detail": "grep -rnE 'fastapi|starlette' app/ -> 0 lines across the ENTIRE app/ package. The pure layer is complete and knows nothing about HTTP."
+    },
+    {
+      "name": "glossary_compliance",
+      "status": "PASS",
+      "detail": "FINDING (criterion defect, not a code defect): the phase's literal check `grep -rniE 'search.index|inverted.index' app/` reports 1 hit at app/loader.py:2 -- but that is a FALSE POSITIVE. The unescaped '.' in the regex matches '/', so ordinary Vietnamese prose 'tang search/index.' trips it. Re-run with a literal separator class (`search[ _-]index|inverted[ _-]index`) -> 0 lines. No glossary violation exists. This is the FIFTH imprecise grep-based criterion found in this plan (after A10, A12, phase-1's pythonpath test, and A11's prose-matching); the pattern is systemic and is being surfaced to the user."
+    }
+  ],
+  "verdict": "PASS",
+  "change_class": "feature",
+  "signals": [
+    "src_changed",
+    "test_has_assertions",
+    "discrimination_proven_against_broken_implementation",
+    "independent_re_derivation_by_main"
+  ]
+}
