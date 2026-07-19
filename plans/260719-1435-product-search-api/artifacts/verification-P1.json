@@ -1,0 +1,56 @@
+{
+  "stage": "push",
+  "plan": "260719-1435-product-search-api",
+  "phase": "P1",
+  "actor": "user:ev1lstar2512@gmail.com/agent:claude",
+  "ts": "2026-07-19T16:45:00+00:00",
+  "checks": [
+    {
+      "name": "unit",
+      "status": "PASS",
+      "detail": "`.venv/bin/python -m pytest tests/ -q` -> 4 passed, 0 failed, 0 skipped. Re-run independently by main after the subagent reported."
+    },
+    {
+      "name": "red_green_discipline",
+      "status": "PASS",
+      "detail": "RED via system python3 (venv did not yet exist, per VL-20): test_fastapi_importable + test_testclient_usable failed with ModuleNotFoundError: No module named 'fastapi' -- failed for the dependency reason, not a missing-interpreter reason. GREEN after installing the 5 pinned deps."
+    },
+    {
+      "name": "regression",
+      "status": "PASS",
+      "detail": "test_app_package_importable rebuilt as a DISCRIMINATING guard and verified by main via a 3-state toggle: pythonpath=['.'] present -> 1 passed; pythonpath removed -> 1 failed with ModuleNotFoundError: No module named 'app'; restored (byte-exact diff) -> 4 passed. The original version passed in BOTH states (proven with `-c /dev/null`) and guarded nothing."
+    },
+    {
+      "name": "rk15_flat_layout_avoided",
+      "status": "PASS",
+      "detail": "grep -cE '^\\[build-system\\]|^\\[tool\\.setuptools\\]' pyproject.toml -> 0. importlib.metadata.version('product-search-api') raises PackageNotFoundError, proving the project is NOT installed as a package. The `pip install -e .` flat-layout build rejection (RK15, plan-critical) is structurally avoided."
+    },
+    {
+      "name": "rk5_httpx2_correct_package",
+      "status": "PASS",
+      "detail": "TestClient(FastAPI()) instantiates without RuntimeError; `.venv/bin/python -c 'import httpx2'` exit 0. Test instantiates rather than merely imports, because starlette/testclient.py imports httpx2 lazily."
+    },
+    {
+      "name": "dependency_pinning",
+      "status": "PASS",
+      "detail": "grep -c '==' pyproject.toml -> 5 (all deps pinned). grep -c '>=' pyproject.toml -> 1 (requires-python only, no dep ranges)."
+    },
+    {
+      "name": "dataset_shape_rk9",
+      "status": "PASS",
+      "detail": "data/products.json loads as dict (envelope, not list); ['products'] has exactly 20 elements, ['categories'] exactly 5. Locks the envelope shape for P3."
+    },
+    {
+      "name": "workspace_hygiene",
+      "status": "PASS",
+      "detail": "git status --porcelain | grep -c '^?? \\.venv' -> 0. .gitignore carries .venv/, __pycache__/, .pytest_cache/."
+    }
+  ],
+  "verdict": "PASS",
+  "change_class": "feature",
+  "signals": [
+    "src_changed",
+    "test_has_assertions",
+    "deviation_from_phase_spec_resolved_with_user_approval"
+  ]
+}

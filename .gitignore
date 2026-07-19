@@ -6,3 +6,9 @@ harness/e2e/RUN-LOG.md
 .claude/settings.json
 .claude/settings.local.json
 # <<< harness <<<
+
+# >>> project (venv + caches — never commit) >>>
+.venv/
+__pycache__/
+.pytest_cache/
+# <<< project <<<

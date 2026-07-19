@@ -1,7 +1,7 @@
 ---
 id: 260719-1435-product-search-api
 title: "Product Search API"
-status: approved
+status: in_progress
 mode: hard
 tdd: true
 branch: feat/product-search-api
