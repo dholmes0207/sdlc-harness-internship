@@ -3,7 +3,7 @@
 Bài nộp được cung cấp dưới dạng GitHub Release.
 
 - [Báo cáo insight khi sử dụng SDLC Harness](docs/harness-insights.md)
-- [Trang Release và file ZIP đầy đủ](THAY_BẰNG_LINK_RELEASE)
+- [Trang Release và file ZIP đầy đủ](https://github.com/dholmes0207/sdlc-harness-internship/releases/tag/v0.1-preliminary)
 
 File `sdlc-harness-internship-full.zip` trong Release được tạo từ toàn bộ
 thư mục dự án, bao gồm cả các file runtime và các file bị Git ignore, theo
