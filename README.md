@@ -2,7 +2,7 @@
 
 Bài nộp được cung cấp dưới dạng GitHub Release.
 
-- [Báo cáo insight khi sử dụng SDLC Harness](docs/harness-insights.md)
+- [Báo cáo insight khi sử dụng SDLC Harness](docs/HARNESS_INSIGHT.md)
 - [Trang Release và file ZIP đầy đủ](https://github.com/dholmes0207/sdlc-harness-internship/releases/tag/v0.1-preliminary)
 
 File `sdlc-harness-internship-full.zip` trong Release được tạo từ toàn bộ
